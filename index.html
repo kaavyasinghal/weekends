@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FAF9F5" />
+  <title>Weekend Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #FAF9F5;
+      --surface: #FFFFFF;
+      --surface-2: #F1EFE8;
+      --text: #1F1E1B;
+      --text-2: #5F5E5A;
+      --text-3: #888780;
+      --border: #E5E2D9;
+      --accent: #3C3489;
+      --accent-bg: #EEEDFE;
+      --success: #085041;
+      --success-bg: #E1F5EE;
+      --warm: #633806;
+      --warm-bg: #FAEEDA;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1A1915;
+        --surface: #25241F;
+        --surface-2: #2E2D27;
+        --text: #F5F4EE;
+        --text-2: #B5B3AB;
+        --text-3: #8B8980;
+        --border: #3A3933;
+        --accent-bg: #2A2750;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 2px;
+      letter-spacing: -0.01em;
+    }
+    .header p { font-size: 12px; color: var(--text-2); margin: 0; }
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--text-2);
+      cursor: pointer;
+    }
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-3);
+    }
+    .sync-dot.synced { background: #4CAF50; }
+    .sync-dot.syncing { background: #FFA726; animation: pulse 1s infinite; }
+    .sync-dot.error { background: #EF5350; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+    .blueprint {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .blueprint-rule { font-size: 16px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+    .blueprint-sub { font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.5; }
+    .blueprint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .blueprint-cell {
+      background: var(--surface-2);
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+    }
+    .blueprint-cell .label {
+      font-size: 10px;
+      color: var(--text-2);
+      margin: 0 0 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .blueprint-cell .desc { font-size: 12px; margin: 0; line-height: 1.4; }
+    .blueprint-target {
+      font-size: 11px;
+      color: var(--text-3);
+      margin: 12px 0 0;
+      line-height: 1.5;
+    }
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 16px;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-2);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      white-space: nowrap;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .tab:hover { background: var(--surface-2); color: var(--text); }
+    .tab.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 12px;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .item.done { opacity: 0.55; }
+    .item.done .text { text-decoration: line-through; }
+    .check {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--text-3);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .check.checked {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
+    .check.checked::after { content: "✓"; font-size: 12px; line-height: 1; }
+    .text { flex: 1; word-break: break-word; }
+    .delete {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+      font-family: inherit;
+    }
+    .delete:hover { color: #D32F2F; }
+    .empty { font-size: 13px; color: var(--text-3); padding: 14px; text-align: center; }
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .add-row input, .add-row select {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 12px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .add-row input { min-width: 180px; }
+    .add-row select { max-width: 140px; flex: 0 0 auto; }
+    button {
+      padding: 9px 14px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    button:hover { background: var(--surface-2); }
+    button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    button.primary:hover { opacity: 0.9; }
+    .ask-claude-btn {
+      width: 100%;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-2);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      padding: 11px;
+    }
+    .ask-claude-btn:hover { background: var(--surface-2); }
+    .section-intro {
+      font-size: 13px;
+      color: var(--text-2);
+      margin: 0 0 14px;
+    }
+    .month-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 12px;
+    }
+    .month-info { flex: 1; min-width: 0; }
+    .month-info .name { margin: 0; font-size: 14px; font-weight: 600; }
+    .month-info .hint { margin: 2px 0 0; font-size: 12px; color: var(--text-2); }
+    .month-info .progress {
+      height: 5px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+      max-width: 180px;
+    }
+    .month-info .progress-fill {
+      height: 100%;
+      background: var(--text);
+      transition: width 0.3s;
+    }
+    .counter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .counter button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: 6px;
+    }
+    .counter-val {
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 36px;
+      text-align: center;
+    }
+    .month-picker-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+    .month-picker-row select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    .done-tag {
+      color: var(--success);
+      font-size: 12px;
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    details {
+      margin-bottom: 8px;
+    }
+    details summary {
+      cursor: pointer;
+      padding: 11px 14px;
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    details summary::after { content: "▾"; font-size: 11px; color: var(--text-3); }
+    details[open] summary::after { content: "▴"; }
+    details summary::-webkit-details-marker { display: none; }
+    details .item { background: transparent; border: none; padding: 7px 14px; }
+    .intake {
+      background: var(--accent-bg);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .intake p { margin: 0 0 8px; font-size: 12px; color: var(--accent); line-height: 1.5; }
+    .intake p.title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+    .tag.wish { background: var(--warm-bg); color: var(--warm); }
+    .tag.done-bg { background: var(--success-bg); color: var(--success); }
+    .tag.fresh { background: var(--accent-bg); color: var(--accent); }
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 18px 0 8px;
+    }
+    .list-header p { font-size: 13px; font-weight: 600; margin: 0; }
+    .list-header .count { font-size: 12px; color: var(--text-3); }
+    .setup-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .setup-modal.active { display: flex; }
+    .setup-content {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .setup-content h2 { margin: 0 0 10px; font-size: 18px; }
+    .setup-content p { font-size: 13px; color: var(--text-2); line-height: 1.6; margin: 0 0 12px; }
+    .setup-content code {
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .setup-content input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      margin: 8px 0 14px;
+    }
+    .setup-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Weekend dashboard</h1>
+        <p>2 at home · 2 out · every weekend</p>
+      </div>
+      <div class="sync-badge" onclick="openSetup()" title="Sync settings">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-text">Setup sync</span>
+      </div>
+    </div>
+
+    <div class="blueprint">
+      <p class="blueprint-rule">The blueprint: 2 at home, 2 out.</p>
+      <p class="blueprint-sub">Two from home (read, watch a film with intent, cook a project, make a drink). Two out of the house with people (restaurant, museum, screening, performance, speakeasy, brunch).</p>
+      <div class="blueprint-grid">
+        <div class="blueprint-cell"><p class="label">Fri eve</p><p class="desc">Open · pick 4</p></div>
+        <div class="blueprint-cell"><p class="label">Sat eve</p><p class="desc">An "out" thing · with people</p></div>
+        <div class="blueprint-cell"><p class="label">Sun morning</p><p class="desc">Home or another "out"</p></div>
+        <div class="blueprint-cell"><p class="label">Sun eve</p><p class="desc">A home thing · cook, read, film</p></div>
+      </div>
+      <p class="blueprint-target">Monthly target: 1 book · 3 films · 2 new dishes · 1 new restaurant · 1 cultural outing · 1 friend 1:1</p>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="month">✦ Month</button>
+      <button class="tab" data-tab="weekend">⌗ Weekend</button>
+      <button class="tab" data-tab="wishlist">☆ Wishlist</button>
+      <button class="tab" data-tab="films">▶ Films</button>
+      <button class="tab" data-tab="books">❡ Books</button>
+      <button class="tab" data-tab="cooking">⌘ Cooking</button>
+      <button class="tab" data-tab="drinks">◍ Drinks</button>
+      <button class="tab" data-tab="restaurants">⌂ Restaurants</button>
+      <button class="tab" data-tab="cultural">⚐ Cultural</button>
+      <button class="tab" data-tab="workshops">✶ Workshops</button>
+    </div>
+
+    <div id="section-month" class="section active">
+      <div class="month-picker-row">
+        <p class="section-intro" style="margin:0;">Tracking month:</p>
+        <select id="month-picker"></select>
+      </div>
+      <div id="month-cards"></div>
+      <p style="font-size:12px; color:var(--text-3); margin:16px 0 0; line-height:1.5;">Tap + when you do something. Targets are gentle on purpose.</p>
+    </div>
+
+    <div id="section-weekend" class="section">
+      <p class="section-intro">Pick four for this weekend. Two from home, two out. Refresh Friday evening.</p>
+      <p style="font-size:13px; font-weight:600; margin:14px 0 8px;">⌂ At home — pick 2</p>
+      <div id="home-options"></div>
+      <p style="font-size:13px; font-weight:600; margin:20px 0 8px;">⚐ Out of house — pick 2</p>
+      <div id="out-options"></div>
+      <button onclick="resetWeekend()" style="margin-top:16px; font-size:12px;">↻ Reset for next weekend</button>
+    </div>
+
+    <div id="section-wishlist" class="section">
+      <div class="intake">
+        <p class="title">⬆ Add from a screenshot</p>
+        <p>See something on Instagram, get a recommendation in chat, screenshot a restaurant? Take that screenshot to Claude with: <em>"add this to my wishlist"</em> — then add it here manually, or paste the details below.</p>
+      </div>
+      <p class="section-intro">Add anything you discover. Mark done when you do it.</p>
+      <div class="add-row">
+        <input type="text" id="wishlist-input" placeholder="e.g. Lodi the Garden Restaurant..." />
+        <select id="wishlist-category">
+          <option value="restaurant">Restaurant</option>
+          <option value="event">Event/Workshop</option>
+          <option value="place">Place/Venue</option>
+          <option value="experience">Experience</option>
+          <option value="other">Other</option>
+        </select>
+        <button class="primary" onclick="addWishlist()">Add</button>
+      </div>
+      <div class="list-header">
+        <p>To try</p>
+        <span class="count" id="wish-count">0</span>
+      </div>
+      <div id="wishlist-active"></div>
+      <div class="list-header">
+        <p style="color:var(--text-2);">Done</p>
+        <span class="count" id="done-count">0</span>
+      </div>
+      <div id="wishlist-done"></div>
+    </div>
+
+    <div id="section-films" class="section">
+      <p class="section-intro">A starter watchlist mixed across world cinema, Indian, and recent releases.</p>
+      <div id="films-list"></div>
+      <div class="add-row"><input type="text" id="films-input" placeholder="Add your own film..." /><button class="primary" onclick="addItem('films')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for more film ideas</a>
+    </div>
+
+    <div id="section-books" class="section">
+      <p class="section-intro">A starter reading stack across fiction, non-fiction, and Indian voices.</p>
+      <div id="books-list"></div>
+      <div class="add-row"><input type="text" id="books-input" placeholder="Add your own book..." /><button class="primary" onclick="addItem('books')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for more book ideas</a>
+    </div>
+
+    <div id="section-cooking" class="section">
+      <p class="section-intro">Ambitious-but-doable cooking projects. Tick what you've made.</p>
+      <div id="cooking-list"></div>
+      <div class="add-row"><input type="text" id="cooking-input" placeholder="Add a dish you want to make..." /><button class="primary" onclick="addItem('cooking')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for more cooking ideas</a>
+    </div>
+
+    <div id="section-drinks" class="section">
+      <p class="section-intro">Cocktails, coffee, tea — things to learn to make at home.</p>
+      <div id="drinks-list"></div>
+      <div class="add-row"><input type="text" id="drinks-input" placeholder="Add a drink to learn..." /><button class="primary" onclick="addItem('drinks')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for a drink to learn this weekend</a>
+    </div>
+
+    <div id="section-restaurants" class="section">
+      <p class="section-intro">Delhi restaurants worth visiting. Tick when you go.</p>
+      <div id="restaurants-list"></div>
+      <div class="add-row"><input type="text" id="restaurants-input" placeholder="Add a restaurant..." /><button class="primary" onclick="addItem('restaurants')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for new Delhi restaurants</a>
+    </div>
+
+    <div id="section-cultural" class="section">
+      <p class="section-intro">Museums, galleries, performance venues. Bookmark their calendars.</p>
+      <div id="cultural-list"></div>
+      <div class="add-row"><input type="text" id="cultural-input" placeholder="Add a venue..." /><button class="primary" onclick="addItem('cultural')">Add</button></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude what's on this weekend</a>
+    </div>
+
+    <div id="section-workshops" class="section">
+      <p class="section-intro">Drop-in workshops in Delhi by category. Tap to expand.</p>
+      <div id="workshops-list"></div>
+      <a class="ask-claude-btn" href="https://claude.ai" target="_blank">✦ Ask Claude for current workshops</a>
+    </div>
+  </div>
+
+  <div class="setup-modal" id="setup-modal">
+    <div class="setup-content">
+      <h2>Google Sheets sync</h2>
+      <p>Paste your Apps Script web app URL below. Setup instructions are in the README file you got. Without sync, data still saves locally in your browser.</p>
+      <p>Web app URL:</p>
+      <input type="text" id="sheets-url" placeholder="https://script.google.com/macros/s/.../exec" />
+      <div class="setup-actions">
+        <button onclick="clearSync()">Disconnect</button>
+        <button onclick="closeSetup()">Cancel</button>
+        <button class="primary" onclick="saveSync()">Save &amp; sync</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DATA = {
+      films: ["Pather Panchali — Satyajit Ray","Charulata — Satyajit Ray","In the Mood for Love — Wong Kar-wai","Chungking Express — Wong Kar-wai","Past Lives — Celine Song","Portrait of a Lady on Fire — Céline Sciamma","Aftersun — Charlotte Wells","Parasite — Bong Joon-ho","Burning — Lee Chang-dong","The Lunchbox — Ritesh Batra","Court — Chaitanya Tamhane","Masaan — Neeraj Ghaywan","All We Imagine as Light — Payal Kapadia","Roma — Alfonso Cuarón","Anatomy of a Fall — Justine Triet","The Worst Person in the World — Joachim Trier","Drive My Car — Ryusuke Hamaguchi","Perfect Days — Wim Wenders","Lost in Translation — Sofia Coppola","Call Me By Your Name — Luca Guadagnino"],
+      books: ["A Suitable Boy — Vikram Seth","The God of Small Things — Arundhati Roy","Em and the Big Hoom — Jerry Pinto","City of Djinns — William Dalrymple","The Last Mughal — William Dalrymple","Twilight in Delhi — Ahmed Ali","Midnight's Children — Salman Rushdie","Convenience Store Woman — Sayaka Murata","Klara and the Sun — Kazuo Ishiguro","Days at the Morisaki Bookshop — Satoshi Yagisawa","Pachinko — Min Jin Lee","Crying in H Mart — Michelle Zauner","Bittersweet — Susan Cain","Four Thousand Weeks — Oliver Burkeman","The Creative Act — Rick Rubin","Wintering — Katherine May","An Era of Darkness — Shashi Tharoor","The Argumentative Indian — Amartya Sen","A Gentleman in Moscow — Amor Towles","Tomorrow and Tomorrow and Tomorrow — Gabrielle Zevin"],
+      cooking: ["Homemade ramen with chashu pork","Thai green curry from scratch (pound your own paste)","Risotto alla Milanese with saffron","Fresh pasta — tagliatelle al ragù","Naga pork with bamboo shoot","Kerala Syrian Christian fish moilee","Bohri chicken white korma","Coorgi pandi curry","Levantine mezze spread","Shakshuka with proper tomato base","Roast chicken, Zuni Café style","Mapo tofu with real Sichuan peppercorns","Dan dan noodles","Khow suey, a proper one","Galouti kebab","Lucknowi biryani (dum)","Mishti doi from scratch","A French tart (lemon, fig, or apple)","Burmese tea leaf salad","Smashed cucumber salad with chilli oil"],
+      drinks: ["Negroni — properly stirred, big cube","Old Fashioned — bourbon, sugar, bitters","Daiquiri — three ingredients, no shortcuts","Gimlet — gin, lime cordial","Espresso Martini","Margarita — fresh lime, salt rim","Aperol Spritz","Whisky Sour with egg white","Paloma — tequila and grapefruit","Pour-over coffee (V60, Hario)","AeroPress — dial in your recipe","Cold brew at home","Masala chai, ratio-perfected","First-flush Darjeeling, brewed right","Matcha latte","Kashmiri kahwa","Iced hibiscus tea","Salted lassi","House gin and tonic with proper garnish","Mocktail: tamarind and ginger fizz"],
+      restaurants: ["Indian Accent — The Lodhi","Comorin — Gurgaon","Bukhara — ITC Maurya","Dum Pukht — ITC Maurya","Olive Bistro — Mehrauli","Diva — Greater Kailash","Megu — The Leela","Hosa — Mehrauli","Tres — Lodhi Colony","Plats — Saket","Le Bistro du Parc — Defence Colony","Yum Yum Cha","Tía Maria — Khan Market","The Wine Company — Cyber Hub","Toast & Tonic — Aerocity","AnnaMaya — Andaz Aerocity","Karim's — Jama Masjid","Al Jawahar — Jama Masjid","Kuremal Kulfiwale — Chawri Bazaar","Lodi the Garden Restaurant"],
+      cultural: ["Kiran Nadar Museum (KNMA), Saket","National Museum, Janpath","Crafts Museum, Pragati Maidan","NGMA","Bikaner House — exhibitions","Vadehra Art Gallery","Nature Morte, Dhan Mill","Shrine Empire","Gallery Espace","India Habitat Centre","India International Centre","Alliance Française","Goethe-Institut","Japan Foundation","Stein Auditorium","Kamani Auditorium","National School of Drama","Akshara Theatre","Piano Man Jazz Club","Nizamuddin Dargah — Thursday qawwali","Sunder Nursery","Lodhi Art District"],
+      workshops: {
+        "Cocktails & mixology": ["Vivre Experiences — vivreexperiences.com","Trove Experiences — troveexperiences.com","All Things Fun — allthingsfun.in","Tulleeho — tulleeho.com","Sidecar GK-II — @sidecar.in"],
+        "Baking & pastry": ["Lavonne Academy, Lajpat Nagar — delhi.lavonne.in","APCA — apcaindia.com","Tedco Global Chefs Academy"],
+        "Pottery & ceramics": ["Studio 694 — @studio.694","Claying Thoughts — @clayingthoughts","Zorba — Magic of Clay","Meena Vohra Studio"],
+        "Block printing & textile": ["Maasa Production, Paharganj","Indian Block Print Fabrics","Anokhi Museum (Jaipur day-trip)"],
+        "Wine, whisky, tea & coffee": ["Tulleeho","Blue Tokai cuppings","Subko Coffee, Aerocity","Vahdam & Tea Trunk"],
+        "Music & piano": ["Piano Man Jazz Club","Delhi School of Music","Furtados School of Music"],
+        "Yoga & movement": ["Sivananda Yoga, Kailash Colony","Iyengar Yoga, Patel Nagar","IHC Mindful Retreat","Anahata Yoga, Vasant Vihar"],
+        "Surprise picks": ["Bombay Perfumery","Sahapedia heritage events","Kunzum literary evenings","Bombay Lettering Co.","Goonj volunteering"]
+      },
+      homeOptions: ["Reading hour (45–90 min)","A film, with intent","A cooking project","Drinks craft (cocktail, pour-over, tea)"],
+      outOptions: ["A new restaurant","Museum or gallery","Film screening (IHC, Alliance, etc.)","Live performance (theatre, music, Dastangoi)","Speakeasy with a friend","Brunch with a different friend"],
+      milestones: [
+        { key: "book", label: "1 book", target: 1, hint: "Finished, not just started" },
+        { key: "film", label: "3 films", target: 3, hint: "From the watchlist" },
+        { key: "dish", label: "2 dishes", target: 2, hint: "New, ambitious recipes" },
+        { key: "restaurant", label: "1 restaurant", target: 1, hint: "Never-been-before" },
+        { key: "cultural", label: "1 cultural outing", target: 1, hint: "Museum, gallery, performance" },
+        { key: "friend", label: "1 friend 1:1", target: 1, hint: "Real catch-up, not group" }
+      ]
+    };
+
+    const LIST_KEYS = ['films','books','cooking','drinks','restaurants','cultural'];
+
+    let state = {
+      lists: {},
+      weekend: { home: [], out: [] },
+      monthData: {},
+      currentMonth: getCurrentMonth(),
+      wishlist: []
+    };
+
+    let syncUrl = '';
+    let syncTimer = null;
+    let isInitialLoad = true;
+
+    function getCurrentMonth() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+    function monthLabel(key) {
+      const [y,m] = key.split('-');
+      const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${names[parseInt(m)-1]} ${y}`;
+    }
+
+    function localSave() {
+      try { localStorage.setItem('kaavya-dashboard', JSON.stringify(state)); }
+      catch (e) { console.warn('localStorage save failed', e); }
+    }
+    function localLoad() {
+      try {
+        const raw = localStorage.getItem('kaavya-dashboard');
+        if (raw) {
+          const loaded = JSON.parse(raw);
+          state = { ...state, ...loaded };
+          return true;
+        }
+      } catch (e) { console.warn('localStorage load failed', e); }
+      return false;
+    }
+
+    function setSyncStatus(status, text) {
+      const dot = document.getElementById('sync-dot');
+      const txt = document.getElementById('sync-text');
+      dot.className = 'sync-dot ' + status;
+      txt.textContent = text;
+    }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    async function cloudPush() {
+      if (!syncUrl) return;
+      setSyncStatus('syncing', 'Syncing…');
+      try {
+        const res = await fetch(syncUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'save', data: state })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const result = await res.json();
+        if (result.status !== 'ok') throw new Error(result.message || 'sync failed');
+        setSyncStatus('synced', 'Synced');
+      } catch (e) {
+        console.warn('cloud push failed', e);
+        setSyncStatus('error', 'Sync error');
+      }
+    }
+
+    async function cloudPull() {
+      if (!syncUrl) return false;
+      setSyncStatus('syncing', 'Loading…');
+      try {
+        const res = await fetch(syncUrl + '?action=load', { method: 'GET' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const result = await res.json();
+        if (result.status === 'ok' && result.data) {
+          state = { ...state, ...result.data };
+          localSave();
+          setSyncStatus('synced', 'Synced');
+          return true;
+        }
+        setSyncStatus('synced', 'Synced');
+        return false;
+      } catch (e) {
+        console.warn('cloud pull failed', e);
+        setSyncStatus('error', 'Sync error');
+        return false;
+      }
+    }
+
+    function scheduleSync() {
+      localSave();
+      if (!syncUrl) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(cloudPush, 1500);
+    }
+
+    async function init() {
+      // Defaults
+      for (const k of LIST_KEYS) {
+        state.lists[k] = DATA[k].map(t => ({ text: t, done: false }));
+      }
+
+      // Load from local first (fast)
+      localLoad();
+
+      // Load sync URL
+      syncUrl = localStorage.getItem('kaavya-sync-url') || '';
+      if (syncUrl) {
+        setSyncStatus('syncing', 'Loading…');
+        await cloudPull();
+      } else {
+        setSyncStatus('', 'Setup sync');
+      }
+
+      render();
+      isInitialLoad = false;
+    }
+
+    function render() {
+      renderMonth();
+      renderWeekend();
+      LIST_KEYS.forEach(renderList);
+      renderWorkshops();
+      renderWishlist();
+    }
+
+    function renderMonth() {
+      const picker = document.getElementById('month-picker');
+      const current = getCurrentMonth();
+      const months = new Set([current, state.currentMonth, ...Object.keys(state.monthData)]);
+      const sorted = [...months].sort().reverse();
+      picker.innerHTML = sorted.map(m => `<option value="${m}" ${m===state.currentMonth?'selected':''}>${monthLabel(m)}</option>`).join('');
+      picker.onchange = (e) => { state.currentMonth = e.target.value; renderMonth(); scheduleSync(); };
+      const data = state.monthData[state.currentMonth] || {};
+      document.getElementById('month-cards').innerHTML = DATA.milestones.map(m => {
+        const count = data[m.key] || 0;
+        const pct = Math.min(100, Math.round((count / m.target) * 100));
+        const done = count >= m.target;
+        return `<div class="month-card">
+          <div class="month-info">
+            <p class="name">${m.label} ${done ? '<span class="done-tag">✓ done</span>' : ''}</p>
+            <p class="hint">${m.hint}</p>
+            <div class="progress"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="counter">
+            <button onclick="adjustMilestone('${m.key}',-1)">−</button>
+            <span class="counter-val">${count}/${m.target}</span>
+            <button onclick="adjustMilestone('${m.key}',1)">+</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function adjustMilestone(key, delta) {
+      if (!state.monthData[state.currentMonth]) state.monthData[state.currentMonth] = {};
+      const cur = state.monthData[state.currentMonth][key] || 0;
+      state.monthData[state.currentMonth][key] = Math.max(0, cur + delta);
+      scheduleSync();
+      renderMonth();
+    }
+
+    function renderWeekend() {
+      document.getElementById('home-options').innerHTML = DATA.homeOptions.map((o,i) => {
+        const c = state.weekend.home.includes(i);
+        return `<div class="item ${c?'done':''}" onclick="toggleWeekend('home',${i})"><div class="check ${c?'checked':''}"></div><span class="text">${o}</span></div>`;
+      }).join('');
+      document.getElementById('out-options').innerHTML = DATA.outOptions.map((o,i) => {
+        const c = state.weekend.out.includes(i);
+        return `<div class="item ${c?'done':''}" onclick="toggleWeekend('out',${i})"><div class="check ${c?'checked':''}"></div><span class="text">${o}</span></div>`;
+      }).join('');
+    }
+
+    function toggleWeekend(cat, idx) {
+      const arr = state.weekend[cat];
+      const i = arr.indexOf(idx);
+      if (i>=0) arr.splice(i,1); else arr.push(idx);
+      scheduleSync();
+      renderWeekend();
+    }
+    function resetWeekend() {
+      state.weekend = { home: [], out: [] };
+      scheduleSync();
+      renderWeekend();
+    }
+
+    function renderList(key) {
+      const container = document.getElementById(`${key}-list`);
+      const items = state.lists[key];
+      if (!items || !items.length) { container.innerHTML = '<div class="empty">Nothing yet. Add something below.</div>'; return; }
+      container.innerHTML = items.map((item, idx) => `
+        <div class="item ${item.done?'done':''}">
+          <div class="check ${item.done?'checked':''}" onclick="toggleListItem('${key}',${idx})"></div>
+          <span class="text">${escapeHtml(item.text)}</span>
+          <button class="delete" onclick="deleteListItem('${key}',${idx})">×</button>
+        </div>`).join('');
+    }
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function toggleListItem(key, idx) { state.lists[key][idx].done = !state.lists[key][idx].done; scheduleSync(); renderList(key); }
+    function deleteListItem(key, idx) { state.lists[key].splice(idx,1); scheduleSync(); renderList(key); }
+    function addItem(key) {
+      const input = document.getElementById(`${key}-input`);
+      const val = input.value.trim();
+      if (!val) return;
+      state.lists[key].push({ text: val, done: false });
+      input.value = '';
+      scheduleSync();
+      renderList(key);
+    }
+
+    function renderWorkshops() {
+      document.getElementById('workshops-list').innerHTML = Object.entries(DATA.workshops).map(([cat, items]) => `
+        <details><summary>${cat}</summary>
+          ${items.map(i => `<div class="item"><span style="width:6px;height:6px;background:var(--text-3);border-radius:50%;margin-top:8px;flex-shrink:0;"></span><span class="text">${escapeHtml(i)}</span></div>`).join('')}
+        </details>`).join('');
+    }
+
+    function addWishlist() {
+      const input = document.getElementById('wishlist-input');
+      const cat = document.getElementById('wishlist-category').value;
+      const val = input.value.trim();
+      if (!val) return;
+      state.wishlist.unshift({ text: val, category: cat, done: false, added: Date.now() });
+      input.value = '';
+      scheduleSync();
+      renderWishlist();
+    }
+    function toggleWishlist(idx) { state.wishlist[idx].done = !state.wishlist[idx].done; scheduleSync(); renderWishlist(); }
+    function deleteWishlist(idx) { state.wishlist.splice(idx,1); scheduleSync(); renderWishlist(); }
+
+    function renderWishlist() {
+      const active = state.wishlist.filter(i => !i.done);
+      const done = state.wishlist.filter(i => i.done);
+      document.getElementById('wish-count').textContent = active.length;
+      document.getElementById('done-count').textContent = done.length;
+      const FIVE_MIN_AGO = Date.now() - 300000;
+      const renderItem = (item) => {
+        const realIdx = state.wishlist.indexOf(item);
+        const isFresh = item.added && item.added > FIVE_MIN_AGO && !item.done;
+        return `<div class="item ${item.done?'done':''}" style="${isFresh ? 'border-color: var(--accent);' : ''}">
+          <div class="check ${item.done?'checked':''}" onclick="toggleWishlist(${realIdx})"></div>
+          <div style="flex:1; min-width:0;">
+            <span class="text" style="display:block;">${escapeHtml(item.text)}</span>
+            <span class="tag ${item.done?'done-bg':'wish'}">${item.category}</span>
+            ${isFresh ? '<span class="tag fresh">just added</span>' : ''}
+          </div>
+          <button class="delete" onclick="deleteWishlist(${realIdx})">×</button>
+        </div>`;
+      };
+      document.getElementById('wishlist-active').innerHTML = active.length ? active.map(renderItem).join('') : '<div class="empty">Nothing yet. Add things as you discover them.</div>';
+      document.getElementById('wishlist-done').innerHTML = done.length ? done.map(renderItem).join('') : '<div class="empty" style="opacity:0.6;">Items you complete will appear here.</div>';
+    }
+
+    function openSetup() {
+      document.getElementById('sheets-url').value = syncUrl;
+      document.getElementById('setup-modal').classList.add('active');
+    }
+    function closeSetup() { document.getElementById('setup-modal').classList.remove('active'); }
+    async function saveSync() {
+      const url = document.getElementById('sheets-url').value.trim();
+      if (!url) { toast('Please paste a URL'); return; }
+      if (!url.includes('script.google.com')) { toast('That doesn\'t look like an Apps Script URL'); return; }
+      localStorage.setItem('kaavya-sync-url', url);
+      syncUrl = url;
+      closeSetup();
+      setSyncStatus('syncing', 'Connecting…');
+      // Try a pull first to merge any existing cloud data
+      const pulled = await cloudPull();
+      if (pulled) {
+        render();
+        toast('Connected · cloud data loaded');
+      } else {
+        // Push current state as the initial cloud copy
+        await cloudPush();
+        toast('Connected · current data uploaded');
+      }
+    }
+    function clearSync() {
+      localStorage.removeItem('kaavya-sync-url');
+      syncUrl = '';
+      setSyncStatus('', 'Setup sync');
+      closeSetup();
+      toast('Disconnected · data stays local');
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`section-${tab.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('[id$="-input"]').forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          if (input.id === 'wishlist-input') addWishlist();
+          else { const key = input.id.replace('-input',''); if (LIST_KEYS.includes(key)) addItem(key); }
+        }
+      });
+    });
+
+    document.getElementById('setup-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'setup-modal') closeSetup();
+    });
+
+    init();
+  </script>
+</body>
+</html>
