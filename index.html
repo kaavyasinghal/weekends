@@ -351,6 +351,99 @@
     .tag.wish { background: var(--warm-bg); color: var(--warm); }
     .tag.done-bg { background: var(--success-bg); color: var(--success); }
     .tag.fresh { background: var(--accent-bg); color: var(--accent); }
+    .wishlist-form {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .wishlist-form input, .wishlist-form select, .wishlist-form textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .wishlist-form textarea { resize: vertical; min-height: 50px; font-family: inherit; }
+    .wishlist-form .form-row {
+      display: flex;
+      gap: 8px;
+    }
+    .wishlist-form .form-row > * { flex: 1; min-width: 0; }
+    .wishlist-form .form-row select { max-width: 160px; flex: 0 0 auto; }
+    .wish-entry {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .wish-entry:hover { border-color: var(--text-3); }
+    .wish-entry.done { opacity: 0.6; }
+    .wish-entry.done .wish-name { text-decoration: line-through; }
+    .wish-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .wish-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0;
+      word-break: break-word;
+    }
+    .wish-meta {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+    .wish-meta .field {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .wish-meta a {
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .wish-meta a:hover { text-decoration: underline; }
+    .wish-notes {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .wish-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .wish-actions button {
+      padding: 4px 8px;
+      font-size: 11px;
+      background: transparent;
+      border: 0.5px solid var(--border);
+      color: var(--text-2);
+    }
+    .wish-actions button:hover { background: var(--surface-2); }
+    .wish-actions button.danger:hover { color: #D32F2F; border-color: #D32F2F; }
     .list-header {
       display: flex;
       align-items: center;
@@ -476,20 +569,30 @@
     <div id="section-wishlist" class="section">
       <div class="intake">
         <p class="title">⬆ Add from a screenshot</p>
-        <p>See something on Instagram, get a recommendation in chat, screenshot a restaurant? Take that screenshot to Claude with: <em>"add this to my wishlist"</em> — then add it here manually, or paste the details below.</p>
+        <p>See something on Instagram, get a recommendation in chat, screenshot a restaurant? Send it to Claude with: <em>"add this to my wishlist"</em> — Claude will tell you the details to type in here.</p>
       </div>
-      <p class="section-intro">Add anything you discover. Mark done when you do it.</p>
-      <div class="add-row">
-        <input type="text" id="wishlist-input" placeholder="e.g. Lodi the Garden Restaurant..." />
-        <select id="wishlist-category">
-          <option value="restaurant">Restaurant</option>
-          <option value="event">Event/Workshop</option>
-          <option value="place">Place/Venue</option>
-          <option value="experience">Experience</option>
-          <option value="other">Other</option>
-        </select>
-        <button class="primary" onclick="addWishlist()">Add</button>
+      <p class="section-intro">Add anything you discover. Mark done when you do it. Click any entry to edit.</p>
+
+      <div class="wishlist-form">
+        <input type="text" id="wishlist-name" placeholder="Name (required) — e.g. Lavonne sourdough class" />
+        <div class="form-row">
+          <input type="text" id="wishlist-date" placeholder="Date / when (optional)" />
+          <input type="text" id="wishlist-place" placeholder="Place (optional)" />
+        </div>
+        <input type="text" id="wishlist-url" placeholder="URL — booking link, Instagram, Google Maps (optional)" />
+        <textarea id="wishlist-notes" placeholder="Notes (optional)" rows="2"></textarea>
+        <div class="form-row">
+          <select id="wishlist-category">
+            <option value="restaurant">Restaurant</option>
+            <option value="event">Event/Workshop</option>
+            <option value="place">Place/Venue</option>
+            <option value="experience">Experience</option>
+            <option value="other">Other</option>
+          </select>
+          <button class="primary" onclick="addWishlist()" style="flex:1;">Add to wishlist</button>
+        </div>
       </div>
+
       <div class="list-header">
         <p>To try</p>
         <span class="count" id="wish-count">0</span>
@@ -561,6 +664,41 @@
         <button onclick="clearSync()">Disconnect</button>
         <button onclick="closeSetup()">Cancel</button>
         <button class="primary" onclick="saveSync()">Save &amp; sync</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="setup-modal" id="edit-modal">
+    <div class="setup-content">
+      <h2>Edit wishlist item</h2>
+      <input type="hidden" id="edit-idx" />
+      <p style="margin: 0 0 4px; font-size: 12px;">Name</p>
+      <input type="text" id="edit-name" placeholder="Name" />
+      <div style="display:flex; gap:8px; margin: 0 -6px;">
+        <div style="flex:1; padding: 0 6px;">
+          <p style="margin: 0 0 4px; font-size: 12px;">Date / when</p>
+          <input type="text" id="edit-date" placeholder="Date" />
+        </div>
+        <div style="flex:1; padding: 0 6px;">
+          <p style="margin: 0 0 4px; font-size: 12px;">Place</p>
+          <input type="text" id="edit-place" placeholder="Place" />
+        </div>
+      </div>
+      <p style="margin: 0 0 4px; font-size: 12px;">URL</p>
+      <input type="text" id="edit-url" placeholder="https://..." />
+      <p style="margin: 0 0 4px; font-size: 12px;">Notes</p>
+      <textarea id="edit-notes" rows="3" style="width:100%; padding:10px 12px; font-size:13px; border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg); color:var(--text); font-family:inherit; box-sizing:border-box; margin: 0 0 14px;" placeholder="Notes"></textarea>
+      <p style="margin: 0 0 4px; font-size: 12px;">Category</p>
+      <select id="edit-category" style="width:100%; padding:10px 12px; font-size:13px; border:0.5px solid var(--border); border-radius:var(--radius-md); background:var(--bg); color:var(--text); font-family:inherit; box-sizing:border-box; margin: 0 0 14px;">
+        <option value="restaurant">Restaurant</option>
+        <option value="event">Event/Workshop</option>
+        <option value="place">Place/Venue</option>
+        <option value="experience">Experience</option>
+        <option value="other">Other</option>
+      </select>
+      <div class="setup-actions">
+        <button onclick="closeEdit()">Cancel</button>
+        <button class="primary" onclick="saveEdit()">Save changes</button>
       </div>
     </div>
   </div>
@@ -729,12 +867,25 @@
       renderWishlist();
     }
 
+    function shiftMonth(key, delta) {
+      const [y, m] = key.split('-').map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+
     function renderMonth() {
       const picker = document.getElementById('month-picker');
       const current = getCurrentMonth();
-      const months = new Set([current, state.currentMonth, ...Object.keys(state.monthData)]);
+      // Show a rolling window: 12 months back, current, 6 months forward
+      const months = new Set([state.currentMonth, ...Object.keys(state.monthData)]);
+      for (let i = -12; i <= 6; i++) months.add(shiftMonth(current, i));
       const sorted = [...months].sort().reverse();
-      picker.innerHTML = sorted.map(m => `<option value="${m}" ${m===state.currentMonth?'selected':''}>${monthLabel(m)}</option>`).join('');
+      picker.innerHTML = sorted.map(m => {
+        const isCurrent = m === current;
+        const isFuture = m > current;
+        const label = monthLabel(m) + (isCurrent ? ' · now' : isFuture ? ' · upcoming' : '');
+        return `<option value="${m}" ${m===state.currentMonth?'selected':''}>${label}</option>`;
+      }).join('');
       picker.onchange = (e) => { state.currentMonth = e.target.value; renderMonth(); scheduleSync(); };
       const data = state.monthData[state.currentMonth] || {};
       document.getElementById('month-cards').innerHTML = DATA.milestones.map(m => {
@@ -821,17 +972,83 @@
     }
 
     function addWishlist() {
-      const input = document.getElementById('wishlist-input');
+      const name = document.getElementById('wishlist-name').value.trim();
+      const date = document.getElementById('wishlist-date').value.trim();
+      const place = document.getElementById('wishlist-place').value.trim();
+      const url = document.getElementById('wishlist-url').value.trim();
+      const notes = document.getElementById('wishlist-notes').value.trim();
       const cat = document.getElementById('wishlist-category').value;
-      const val = input.value.trim();
-      if (!val) return;
-      state.wishlist.unshift({ text: val, category: cat, done: false, added: Date.now() });
-      input.value = '';
+      if (!name) { toast('Name is required'); return; }
+      state.wishlist.unshift({
+        text: name,
+        date: date,
+        place: place,
+        url: url,
+        notes: notes,
+        category: cat,
+        done: false,
+        added: Date.now()
+      });
+      // Clear form
+      document.getElementById('wishlist-name').value = '';
+      document.getElementById('wishlist-date').value = '';
+      document.getElementById('wishlist-place').value = '';
+      document.getElementById('wishlist-url').value = '';
+      document.getElementById('wishlist-notes').value = '';
+      scheduleSync();
+      renderWishlist();
+      toast('Added to wishlist');
+    }
+    function toggleWishlist(idx, ev) {
+      if (ev) ev.stopPropagation();
+      state.wishlist[idx].done = !state.wishlist[idx].done;
       scheduleSync();
       renderWishlist();
     }
-    function toggleWishlist(idx) { state.wishlist[idx].done = !state.wishlist[idx].done; scheduleSync(); renderWishlist(); }
-    function deleteWishlist(idx) { state.wishlist.splice(idx,1); scheduleSync(); renderWishlist(); }
+    function deleteWishlist(idx, ev) {
+      if (ev) ev.stopPropagation();
+      if (!confirm('Delete this item?')) return;
+      state.wishlist.splice(idx, 1);
+      scheduleSync();
+      renderWishlist();
+    }
+    function editWishlist(idx, ev) {
+      if (ev) ev.stopPropagation();
+      const item = state.wishlist[idx];
+      // Populate the edit modal
+      document.getElementById('edit-idx').value = idx;
+      document.getElementById('edit-name').value = item.text || '';
+      document.getElementById('edit-date').value = item.date || '';
+      document.getElementById('edit-place').value = item.place || '';
+      document.getElementById('edit-url').value = item.url || '';
+      document.getElementById('edit-notes').value = item.notes || '';
+      document.getElementById('edit-category').value = item.category || 'other';
+      document.getElementById('edit-modal').classList.add('active');
+    }
+    function saveEdit() {
+      const idx = parseInt(document.getElementById('edit-idx').value);
+      const name = document.getElementById('edit-name').value.trim();
+      if (!name) { toast('Name is required'); return; }
+      const item = state.wishlist[idx];
+      item.text = name;
+      item.date = document.getElementById('edit-date').value.trim();
+      item.place = document.getElementById('edit-place').value.trim();
+      item.url = document.getElementById('edit-url').value.trim();
+      item.notes = document.getElementById('edit-notes').value.trim();
+      item.category = document.getElementById('edit-category').value;
+      closeEdit();
+      scheduleSync();
+      renderWishlist();
+      toast('Updated');
+    }
+    function closeEdit() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+    function normalizeUrl(url) {
+      if (!url) return '';
+      if (url.match(/^https?:\/\//i)) return url;
+      return 'https://' + url;
+    }
 
     function renderWishlist() {
       const active = state.wishlist.filter(i => !i.done);
@@ -842,14 +1059,30 @@
       const renderItem = (item) => {
         const realIdx = state.wishlist.indexOf(item);
         const isFresh = item.added && item.added > FIVE_MIN_AGO && !item.done;
-        return `<div class="item ${item.done?'done':''}" style="${isFresh ? 'border-color: var(--accent);' : ''}">
-          <div class="check ${item.done?'checked':''}" onclick="toggleWishlist(${realIdx})"></div>
-          <div style="flex:1; min-width:0;">
-            <span class="text" style="display:block;">${escapeHtml(item.text)}</span>
-            <span class="tag ${item.done?'done-bg':'wish'}">${item.category}</span>
-            ${isFresh ? '<span class="tag fresh">just added</span>' : ''}
+        const metaParts = [];
+        if (item.date) metaParts.push(`<span class="field">📅 ${escapeHtml(item.date)}</span>`);
+        if (item.place) metaParts.push(`<span class="field">📍 ${escapeHtml(item.place)}</span>`);
+        if (item.url) {
+          const safeUrl = escapeHtml(normalizeUrl(item.url));
+          metaParts.push(`<span class="field">🔗 <a href="${safeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHtml(item.url.replace(/^https?:\/\//i, ''))}</a></span>`);
+        }
+        return `<div class="wish-entry ${item.done?'done':''}" style="${isFresh ? 'border-color: var(--accent);' : ''}" onclick="editWishlist(${realIdx}, event)">
+          <div class="wish-header">
+            <div style="flex:1; min-width:0;">
+              <p class="wish-name">${escapeHtml(item.text)}</p>
+              <div style="margin-top: 4px;">
+                <span class="tag ${item.done?'done-bg':'wish'}">${item.category}</span>
+                ${isFresh ? '<span class="tag fresh">just added</span>' : ''}
+              </div>
+              ${metaParts.length ? `<div class="wish-meta">${metaParts.join('')}</div>` : ''}
+              ${item.notes ? `<div class="wish-notes">${escapeHtml(item.notes)}</div>` : ''}
+            </div>
+            <div class="wish-actions" onclick="event.stopPropagation()">
+              <button onclick="toggleWishlist(${realIdx}, event)" title="${item.done ? 'Mark to-try' : 'Mark done'}">${item.done ? '↺' : '✓'}</button>
+              <button onclick="editWishlist(${realIdx}, event)" title="Edit">✎</button>
+              <button class="danger" onclick="deleteWishlist(${realIdx}, event)" title="Delete">×</button>
+            </div>
           </div>
-          <button class="delete" onclick="deleteWishlist(${realIdx})">×</button>
         </div>`;
       };
       document.getElementById('wishlist-active').innerHTML = active.length ? active.map(renderItem).join('') : '<div class="empty">Nothing yet. Add things as you discover them.</div>';
@@ -900,14 +1133,22 @@
     document.querySelectorAll('[id$="-input"]').forEach(input => {
       input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-          if (input.id === 'wishlist-input') addWishlist();
-          else { const key = input.id.replace('-input',''); if (LIST_KEYS.includes(key)) addItem(key); }
+          const key = input.id.replace('-input','');
+          if (LIST_KEYS.includes(key)) addItem(key);
         }
       });
     });
 
+    // Enter on the wishlist name field submits the form
+    document.getElementById('wishlist-name').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addWishlist();
+    });
+
     document.getElementById('setup-modal').addEventListener('click', (e) => {
       if (e.target.id === 'setup-modal') closeSetup();
+    });
+    document.getElementById('edit-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'edit-modal') closeEdit();
     });
 
     init();
